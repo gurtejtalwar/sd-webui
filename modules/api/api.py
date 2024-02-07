@@ -245,7 +245,7 @@ class Api:
         self.add_api_route("/sdapi/v1/extensions", self.get_extensions_list, methods=["GET"], response_model=list[models.ExtensionItem])
         self.add_api_route("/sdapi/v1/upload-lora", self.upload_lora, methods=["POST"])
         self.add_api_route("/sdapi/v1/delete-lora/{lora}", self.delete_lora, methods=["DELETE"])
-        self.add_api_route("/sdapi/v1/verify", self.verify, methods=["POST"])
+        self.add_api_route("/sdapi/v1/verify", self.verify, methods=["POST"], response_model=models.VerifyResponse)
 
         if shared.cmd_opts.api_server_stop:
             self.add_api_route("/sdapi/v1/server-kill", self.kill_webui, methods=["POST"])
@@ -256,14 +256,12 @@ class Api:
         self.default_script_arg_img2img = []
 
     async def verify(self, image1: UploadFile=File(...), image2: UploadFile = File(...)):
-        if image1.content_type not in self.ALLOWED_IMAGE_TYPES:
-            raise HTTPException(status_code=400, detail="Invalid File Format")
         
         YKF.Key.set('HmS76jJ8jbvgcvxMph1O8MDgHYYa1MmQzj7eXLxbzguQQ0MCyhrI4cUoHQTH')
         YKF.BaseUrl.set('https://face.yoonik.me/v2')
 
         matching_score = YKF.face.verify_images(image1.file,image2.file)
-        return matching_score
+        return models.VerifyResponse(matching_score=matching_score)
 
     async def upload_lora(self, lora: UploadFile = File(...)):
         _,extension = os.path.splitext(lora.filename)
