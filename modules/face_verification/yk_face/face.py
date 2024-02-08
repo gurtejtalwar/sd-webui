@@ -1,13 +1,14 @@
 """Face module of the YouFace API.
 """
 import asyncio
+import requests
 from typing import List, Dict
 from yk_utils.images import parse_image
 from yk_utils.apis import request, request_async
 from yk_face_api_models import ProcessRequest, VerifyRequest, VerifyIdRequest, IdentifyRequest, \
     ProcessRequestConfig
 from yk_face.util import FaceException, face_process_validation
-
+from io import BytesIO
 
 class FaceRouterEndpoints:
     process = "face/process"
@@ -248,8 +249,21 @@ def verify_images(first_image, second_image) -> float:
     :return:
         Matching Score.
     """
-    first_face = process(first_image)
-    second_face = process(second_image)
+    # Function to download image if the argument is a URL
+    def download_image(url):
+        if url.startswith('http://') or url.startswith('https://'):
+            response = requests.get(url)
+            response.raise_for_status()
+            return BytesIO(response.content)
+        else:
+            return url  # Return as is if not a URL
+
+    # Download and process images
+    first_image_data = download_image(first_image)
+    second_image_data = download_image(second_image)
+
+    first_face = process(first_image_data)
+    second_face = process(second_image_data)
 
     error_message = face_process_validation(first_face)
     if error_message:

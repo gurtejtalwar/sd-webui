@@ -317,5 +317,8 @@ class ExtensionItem(BaseModel):
     commit_date: str = Field(title="Commit Date", description="Extension Repository Commit Date")
     enabled: bool = Field(title="Enabled", description="Flag specifying whether this extension is enabled")
 
-class VerifyResponse(BaseModel):
+class FaceVerificationResponse(BaseModel):
     matching_score: float
+class FaceVerificationRequest(BaseModel):
+    image1: str  # Assuming you send the base64-encoded image as a string in JSON
+    image2: str
