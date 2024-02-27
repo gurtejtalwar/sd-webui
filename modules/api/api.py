@@ -529,7 +529,7 @@ class Api:
 
         # avoid dividing zero
         progress = 0.01
-        with self.queue_lock:
+        if shared.state.job_count == 1:
             if shared.state.job_count > 0:
                 progress += shared.state.job_no / shared.state.job_count
             if shared.state.sampling_steps > 0:
@@ -547,7 +547,10 @@ class Api:
             if shared.state.current_image and not req.skip_current_image:
                 current_image = encode_pil_to_base64(shared.state.current_image)
 
-        return models.ProgressResponse(progress=progress, eta_relative=eta_relative, state=shared.state.dict(), current_image=current_image, textinfo=shared.state.textinfo)
+            return models.ProgressResponse(progress=progress, eta_relative=eta_relative, state=shared.state.dict(), current_image=current_image, textinfo=shared.state.textinfo)
+        
+        else:
+            return models.ProgressResponse(progress=0, eta_relative=0, state=shared.state.dict(), textinfo=shared.state.textinfo)
 
     def interrogateapi(self, interrogatereq: models.InterrogateRequest):
         image_b64 = interrogatereq.image
