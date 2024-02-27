@@ -9,7 +9,7 @@ import requests
 import gradio as gr
 from threading import Lock
 from io import BytesIO
-from fastapi import APIRouter, Depends, FastAPI, Request, Response, UploadFile, File
+from fastapi import APIRouter, Depends, FastAPI, Request, Response, UploadFile, File, Body, Query
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.exceptions import HTTPException
 from fastapi.responses import JSONResponse
@@ -371,7 +371,7 @@ class Api:
                         script_args[alwayson_script.args_from + idx] = request.alwayson_scripts[alwayson_script_name]["args"][idx]
         return script_args
 
-    def text2imgapi(self, txt2imgreq: models.StableDiffusionTxt2ImgProcessingAPI):
+    def text2imgapi(self, txt2imgreq: models.StableDiffusionTxt2ImgProcessingAPI, task_id: str = Body(...)):
         script_runner = scripts.scripts_txt2img
         if not script_runner.scripts:
             script_runner.initialize_scripts(False)
@@ -406,7 +406,7 @@ class Api:
                 p.outpath_samples = opts.outdir_txt2img_samples
 
                 try:
-                    shared.state.begin(job="scripts_txt2img")
+                    shared.state.begin(job=task_id)
                     if selectable_scripts is not None:
                         p.script_args = script_args
                         processed = scripts.scripts_txt2img.run(p, *p.script_args) # Need to pass args as list here
@@ -521,11 +521,10 @@ class Api:
 
         return models.PNGInfoResponse(info=geninfo, items=items, parameters=params)
 
-    def progressapi(self, req: models.ProgressRequest = Depends()):
+    def progressapi(self, task_id: str = Query(...), req: models.ProgressRequest = Depends()):
         # copy from check_progress_call of ui.py
-
-        if shared.state.job_count == 0:
-            return models.ProgressResponse(progress=0, eta_relative=0, state=shared.state.dict(), textinfo=shared.state.textinfo)
+        if shared.state.job_count == 0 or shared.state.job != task_id:
+            return models.ProgressResponse(progress=0, eta_relative=0, state={})
 
         # avoid dividing zero
         progress = 0.01
