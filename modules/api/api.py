@@ -421,7 +421,7 @@ class Api:
 
         return models.TextToImageResponse(images=b64images, parameters=vars(txt2imgreq), info=processed.js())
 
-    def img2imgapi(self, img2imgreq: models.StableDiffusionImg2ImgProcessingAPI):
+    def img2imgapi(self, img2imgreq: models.StableDiffusionImg2ImgProcessingAPI, task_id: str = Body(...)):
         init_images = img2imgreq.init_images
         if init_images is None:
             raise HTTPException(status_code=404, detail="Init image not found")
@@ -467,7 +467,7 @@ class Api:
                 p.outpath_samples = opts.outdir_img2img_samples
 
                 try:
-                    shared.state.begin(job="scripts_img2img")
+                    shared.state.begin(job=task_id)
                     if selectable_scripts is not None:
                         p.script_args = script_args
                         processed = scripts.scripts_img2img.run(p, *p.script_args) # Need to pass args as list here
