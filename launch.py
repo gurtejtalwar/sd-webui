@@ -1,7 +1,7 @@
 import sys
 from modules import launch_utils
 
-sys.argv.append("--api")
+sys.argv.append("--nowebui")
 sys.argv.append("--listen")
 args = launch_utils.args
 python = launch_utils.python
